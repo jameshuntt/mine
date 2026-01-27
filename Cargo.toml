@@ -1,0 +1,12 @@
+[package]
+name = "mine"
+version = "0.1.0"
+edition = "2024"
+
+license = "MIT OR Apache-2.0"
+description = "memory stuff"
+
+authors = ["James Hunt <jameshuntdevelopment@gmail.com>"]
+repository = "https://github.com/jameshuntt/mine"
+
+[dependencies]
