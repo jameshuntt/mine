@@ -6,45 +6,31 @@
 //! one becomes the container. A sent secret is exposed for the duration of
 //! the write and nowhere else.
 
-use std::fmt;
 use std::io::{Read, Write};
 
 use abut::{AbutError, FramedReader, FramedWriter};
 use classified::{ClassifiedBuffer, ClassifiedError};
+use liaise::{Liaise, LiaiseCodes};
 
-/// Why a classified receive failed.
-#[derive(Debug)]
+/// Why a classified receive failed. Renders as a `MINE` code; the frame or
+/// container error underneath is the [`source`](std::error::Error::source).
+#[derive(LiaiseCodes, Debug)]
+#[liaise(prefix = "MINE")]
 pub enum RecvError {
     /// The frame could not be read.
+    #[liaise(code = 10, msg = "Frame could not be received", source)]
     Frame(AbutError),
     /// The frame was empty; a container refuses an empty secret.
+    #[liaise(code = 11, msg = "Empty frame refused by the container", source)]
     Empty(ClassifiedError),
-}
-
-impl fmt::Display for RecvError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Frame(e) => e.fmt(f),
-            Self::Empty(e) => e.fmt(f),
-        }
-    }
-}
-
-impl std::error::Error for RecvError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::Frame(e) => Some(e),
-            Self::Empty(e) => Some(e),
-        }
-    }
 }
 
 /// Receive one frame into a zeroizing buffer bounded to its length.
 pub fn recv_classified<R: Read>(reader: &mut FramedReader<R>) -> Result<ClassifiedBuffer, RecvError> {
     let mut bytes = Vec::new();
-    reader.recv_into(&mut bytes).map_err(RecvError::Frame)?;
+    reader.recv_into(&mut bytes)?;
     let len = bytes.len();
-    ClassifiedBuffer::try_from_vec(bytes, len).map_err(RecvError::Empty)
+    Ok(ClassifiedBuffer::try_from_vec(bytes, len)?)
 }
 
 /// Send the contents of a container as one frame.

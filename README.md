@@ -57,10 +57,18 @@ assert!(!path.exists(), "removed when the listener dropped");
 | `unlink_if_socket`, `SocketPathGuard`, `runtime_dir`, `default_socket_path` | the path rules on their own |
 | `peer_of`, `Peer`, `Admit` | who connected, and who is allowed to |
 | `framed` | split a stream into an abut writer and reader |
+| `MineCode`, `code_of` | the crate's refusals as `[MINE000n]` codes, carried inside the `io::Error` |
 | `classified_frames::{recv_classified, send_classified}` | frames as zeroizing buffers (feature `classified`) |
 
 Peer credentials: Linux and Android report pid, uid and gid; macOS and iOS
 report uid, gid and pid; the other BSDs report uid and gid.
+
+Errors: socket operations return `io::Error`, so kinds like `PermissionDenied`
+and `AlreadyExists` stay matchable. When the refusal is this crate's own
+decision the error carries a `MineCode`, rendered by
+[`liaise`](https://crates.io/crates/liaise) as
+`[MINE0004] Refused connection from uid 1000 gid 1000`; `code_of(&err)`
+hands the typed code back.
 
 ## What is not here
 

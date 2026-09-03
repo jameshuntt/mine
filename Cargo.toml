@@ -21,6 +21,7 @@ classified = ["dep:classified"]
 
 [dependencies]
 abut = { version = "0.2.0", path = "../abut", default-features = false }
+liaise = { version = "0.1.6", features = ["std"] }
 nix = { version = "0.30", features = ["socket", "user"], optional = true }
 classified = { version = "0.2.0", path = "../classified", optional = true }
 

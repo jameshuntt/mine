@@ -4,7 +4,7 @@
 use std::io::{self, Read};
 use std::path::PathBuf;
 
-use mine::{peer_of, Admit, Peer, StreamBuilder};
+use mine::{code_of, peer_of, Admit, MineCode, Peer, StreamBuilder};
 
 fn scratch(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("mine-peer-{}-{name}", std::process::id()));
@@ -46,7 +46,8 @@ fn accept_from_admits_me_and_refuses_a_stranger_policy() {
     let mut client = StreamBuilder::new().connect(&path).unwrap();
     let err = bound.accept_from(&Admit::uid(u32::MAX - 1)).unwrap_err();
     assert_eq!(err.kind(), io::ErrorKind::PermissionDenied);
-    assert!(err.to_string().contains(&format!("uid {}", my_uid())), "{err}");
+    assert!(err.to_string().starts_with(&format!("[MINE0004] Refused connection from uid {}", my_uid())), "{err}");
+    assert!(matches!(code_of(&err), Some(MineCode::PeerRefused { uid, .. }) if *uid == my_uid()));
     let mut byte = [0u8; 1];
     assert_eq!(client.read(&mut byte).unwrap(), 0, "the client sees the connection closed");
 

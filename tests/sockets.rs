@@ -6,8 +6,9 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use mine::{
-    default_socket_path, ensure_runtime_subdir, framed, unlink_if_socket, AbutCode, Config, ConfigBuilder, DatagramBuilder,
-    DatagramSink, DatagramSource, FrameSink, FrameSource, FramedReader, ReaderConfig, SocketPathGuard, StreamBuilder,
+    code_of, default_socket_path, ensure_runtime_subdir, framed, unlink_if_socket, AbutCode, Config, ConfigBuilder,
+    DatagramBuilder, DatagramSink, DatagramSource, FrameSink, FrameSource, FramedReader, MineCode, ReaderConfig,
+    SocketPathGuard, StreamBuilder,
 };
 
 fn scratch(name: &str) -> PathBuf {
@@ -21,13 +22,19 @@ fn a_bind_refuses_to_destroy_anything_that_is_not_a_socket() {
     let dir = scratch("path");
     let file = dir.join("file");
     std::fs::write(&file, b"keep me").unwrap();
-    assert_eq!(unlink_if_socket(&file).unwrap_err().kind(), io::ErrorKind::AlreadyExists);
+    let err = unlink_if_socket(&file).unwrap_err();
+    assert_eq!(err.kind(), io::ErrorKind::AlreadyExists);
+    assert_eq!(code_of(&err), Some(&MineCode::NotASocket { path: file.display().to_string() }));
+    assert!(err.to_string().starts_with("[MINE0002] "), "{err}");
     assert_eq!(StreamBuilder::new().bind_listener(&file).unwrap_err().kind(), io::ErrorKind::AlreadyExists);
     assert_eq!(std::fs::read(&file).unwrap(), b"keep me");
 
     let link = dir.join("link");
     std::os::unix::fs::symlink(&file, &link).unwrap();
-    assert_eq!(unlink_if_socket(&link).unwrap_err().kind(), io::ErrorKind::AlreadyExists);
+    let err = unlink_if_socket(&link).unwrap_err();
+    assert_eq!(err.kind(), io::ErrorKind::AlreadyExists);
+    assert!(matches!(code_of(&err), Some(MineCode::RefusedSymlink { .. })));
+    assert!(err.to_string().starts_with("[MINE0001] Refusing to unlink a symlink"), "{err}");
     assert!(link.exists(), "the symlink was not followed or removed");
 
     assert!(unlink_if_socket(&dir.join("absent")).is_ok(), "nothing there is fine");
@@ -72,6 +79,9 @@ fn the_socket_file_is_owner_only_by_default() {
 fn config_refuses_nonblocking_with_timeouts() {
     let err = ConfigBuilder::new().nonblocking(true).read_timeout(Duration::from_millis(5)).build().unwrap_err();
     assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
+    assert_eq!(code_of(&err), Some(&MineCode::NonblockingWithTimeout));
+    assert_eq!(err.to_string(), "[MINE0003] nonblocking is incompatible with read_timeout and write_timeout");
+    assert_eq!(code_of(&io::Error::new(io::ErrorKind::Other, "not ours")), None);
     let cfg = ConfigBuilder::new().umask_mode().write_timeout(Duration::from_secs(1)).build().unwrap();
     assert_eq!(cfg.socket_mode, None);
     assert_eq!(Config::default().socket_mode, Some(0o600));

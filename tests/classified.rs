@@ -37,6 +37,8 @@ fn a_secret_crosses_the_socket_and_lands_in_a_container() {
     assert!(back.ct_eq(&secret));
     let empty = recv_classified(&mut reader).unwrap_err();
     assert!(matches!(empty, RecvError::Empty(_)), "{empty}");
-    assert!(std::error::Error::source(&empty).is_some());
+    assert_eq!(empty.to_string(), "[MINE0011] Empty frame refused by the container");
+    let source = std::error::Error::source(&empty).expect("the container's error is the source");
+    assert_eq!(source.to_string(), "classified value must not be empty");
     server.join().unwrap();
 }

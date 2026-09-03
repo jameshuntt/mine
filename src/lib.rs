@@ -34,16 +34,27 @@
 //! ```
 //!
 //! Datagram sockets get the same path handling through [`DatagramBuilder`].
+//!
+//! Socket operations return `io::Error` so the kinds stay matchable; when the
+//! refusal is this crate's own (a symlink at the path, a peer outside the
+//! policy, a bad config) the error carries a [`MineCode`] rendered by
+//! `liaise` as `[MINE0004] Refused connection from uid 1000 gid 1000`, and
+//! [`code_of`] gets the typed code back out.
+//!
 //! What is not here: message schemas, request routing, TCP. Unix only.
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+
+// The `liaise` derive expands to paths under `alloc::`.
+extern crate alloc;
 
 #[cfg(not(unix))]
 compile_error!("mine is a Unix domain socket crate and builds on Unix only");
 
 mod config;
 mod datagram;
+mod error;
 mod path;
 #[cfg(feature = "peercred")]
 mod peer;
@@ -54,6 +65,9 @@ pub mod classified_frames;
 
 pub use abut;
 pub use abut::{AbutCode, AbutError, FrameSink, FrameSource, FramedReader, FramedWriter, ReaderConfig};
+pub use liaise;
+
+pub use error::{code_of, MineCode};
 
 pub use config::{Config, ConfigBuilder};
 pub use datagram::{BoundDatagram, DatagramBuilder, DatagramSink, DatagramSource};

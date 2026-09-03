@@ -5,6 +5,8 @@ use std::os::unix::fs::{FileTypeExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
+use crate::error::{refuse, MineCode};
+
 /// Create the parent directory of `path` if it is missing.
 pub fn ensure_parent_dir(path: &Path) -> io::Result<()> {
     if let Some(parent) = path.parent() {
@@ -16,9 +18,10 @@ pub fn ensure_parent_dir(path: &Path) -> io::Result<()> {
 /// Remove whatever is at `path`, but only if it is a Unix socket.
 ///
 /// A stale socket from a previous run is removed. A symlink is refused
-/// without following it, and a regular file or directory is refused, both
-/// with [`io::ErrorKind::AlreadyExists`]: a bind must never destroy
-/// something that is not a socket. Nothing at the path is fine.
+/// without following it ([`MineCode::RefusedSymlink`]), and a regular file
+/// or directory is refused ([`MineCode::NotASocket`]), both as
+/// [`io::ErrorKind::AlreadyExists`]: a bind must never destroy something
+/// that is not a socket. Nothing at the path is fine.
 pub fn unlink_if_socket(path: &Path) -> io::Result<()> {
     match fs::symlink_metadata(path) {
         Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
@@ -26,18 +29,15 @@ pub fn unlink_if_socket(path: &Path) -> io::Result<()> {
         Ok(meta) => {
             let kind = meta.file_type();
             if kind.is_symlink() {
-                return Err(io::Error::new(
+                return Err(refuse(
                     io::ErrorKind::AlreadyExists,
-                    format!("refusing to unlink a symlink at the socket path {}", path.display()),
+                    MineCode::RefusedSymlink { path: path.display().to_string() },
                 ));
             }
             if kind.is_socket() {
                 fs::remove_file(path)
             } else {
-                Err(io::Error::new(
-                    io::ErrorKind::AlreadyExists,
-                    format!("{} exists and is not a unix socket", path.display()),
-                ))
+                Err(refuse(io::ErrorKind::AlreadyExists, MineCode::NotASocket { path: path.display().to_string() }))
             }
         }
     }

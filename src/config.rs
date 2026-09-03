@@ -1,5 +1,7 @@
 use std::{io, time::Duration};
 
+use crate::error::{refuse, MineCode};
+
 /// How a socket is opened.
 ///
 /// The default is blocking, no timeouts, and a socket file mode of `0o600`:
@@ -25,12 +27,11 @@ impl Default for Config {
 
 impl Config {
     /// Refuse a nonblocking socket with timeouts: the OS ignores one of them.
+    /// The error is [`io::ErrorKind::InvalidInput`] carrying
+    /// [`MineCode::NonblockingWithTimeout`].
     pub fn validate(&self) -> io::Result<()> {
         if self.nonblocking && (self.read_timeout.is_some() || self.write_timeout.is_some()) {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "nonblocking is incompatible with read_timeout and write_timeout",
-            ));
+            return Err(refuse(io::ErrorKind::InvalidInput, MineCode::NonblockingWithTimeout));
         }
         Ok(())
     }

@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use abut::{FrameSink, FrameSource};
 
 use crate::config::Config;
+use crate::error::{refuse, MineCode};
 use crate::path::{apply_socket_mode, ensure_parent_dir, unlink_if_socket, SocketPathGuard};
 
 /// A bound datagram socket whose path is guarded.
@@ -121,7 +122,7 @@ impl FrameSink for DatagramSink {
     fn send_frame(&mut self, bytes: &[u8]) -> Result<(), io::Error> {
         let sent = self.sock.send(bytes)?;
         if sent != bytes.len() {
-            return Err(io::Error::new(io::ErrorKind::WriteZero, "short datagram send"));
+            return Err(refuse(io::ErrorKind::WriteZero, MineCode::ShortDatagram { sent, len: bytes.len() }));
         }
         Ok(())
     }

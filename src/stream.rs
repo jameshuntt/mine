@@ -44,16 +44,18 @@ impl BoundListener {
 
     /// Accept one connection from a peer the policy admits. A connection
     /// from anyone else is closed and reported as
-    /// [`io::ErrorKind::PermissionDenied`] before any byte is read.
+    /// [`io::ErrorKind::PermissionDenied`] carrying
+    /// [`MineCode::PeerRefused`](crate::MineCode::PeerRefused), before any
+    /// byte is read.
     #[cfg(feature = "peercred")]
     pub fn accept_from(&self, admit: &crate::Admit) -> io::Result<(UnixStream, crate::Peer)> {
         let (stream, _) = self.accept()?;
         let peer = crate::peer_of(&stream)?;
         if !admit.admits(&peer) {
             drop(stream);
-            return Err(io::Error::new(
+            return Err(crate::error::refuse(
                 io::ErrorKind::PermissionDenied,
-                format!("refused connection from uid {} gid {} pid {:?}", peer.uid, peer.gid, peer.pid),
+                crate::MineCode::PeerRefused { uid: peer.uid, gid: peer.gid },
             ));
         }
         Ok((stream, peer))
