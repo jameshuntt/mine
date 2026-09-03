@@ -63,7 +63,8 @@ pub(crate) fn refuse(kind: io::ErrorKind, code: MineCode) -> io::Error {
 /// use std::io;
 /// use mine::{code_of, ConfigBuilder, MineCode};
 ///
-/// let err = ConfigBuilder::new().nonblocking(true).read_timeout(std::time::Duration::from_secs(1)).build().unwrap_err();
+/// let cfg = ConfigBuilder::new().nonblocking(true).read_timeout(std::time::Duration::from_secs(1)).build();
+/// let err = cfg.validate().unwrap_err();
 /// assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
 /// assert_eq!(code_of(&err), Some(&MineCode::NonblockingWithTimeout));
 /// assert_eq!(err.to_string(), "[MINE0003] nonblocking is incompatible with read_timeout and write_timeout");

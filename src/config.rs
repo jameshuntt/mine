@@ -79,9 +79,9 @@ impl ConfigBuilder {
         self
     }
 
-    /// The config, validated.
-    pub fn build(self) -> io::Result<Config> {
-        self.cfg.validate()?;
-        Ok(self.cfg)
+    /// The config. It is validated when a builder binds or connects with it,
+    /// or explicitly with [`Config::validate`].
+    pub fn build(self) -> Config {
+        self.cfg
     }
 }

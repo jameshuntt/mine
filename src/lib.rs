@@ -64,7 +64,7 @@ mod stream;
 pub mod classified_frames;
 
 pub use abut;
-pub use abut::{AbutCode, AbutError, FrameSink, FrameSource, FramedReader, FramedWriter, ReaderConfig};
+pub use abut::{AbutCode, AbutError, FrameSink, FrameSource, FramedReader, FramedWriter, ReaderConfig, DEFAULT_MAX_FRAME_LEN};
 pub use liaise;
 
 pub use error::{code_of, MineCode};

@@ -69,7 +69,7 @@ fn the_socket_file_is_owner_only_by_default() {
     assert_eq!(mode, 0o600);
     drop(bound);
 
-    let cfg = ConfigBuilder::new().socket_mode(0o660).build().unwrap();
+    let cfg = ConfigBuilder::new().socket_mode(0o660).build();
     let bound = StreamBuilder::with_config(cfg).bind_listener(&path).unwrap();
     assert_eq!(std::fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o660);
     drop(bound);
@@ -77,12 +77,18 @@ fn the_socket_file_is_owner_only_by_default() {
 
 #[test]
 fn config_refuses_nonblocking_with_timeouts() {
-    let err = ConfigBuilder::new().nonblocking(true).read_timeout(Duration::from_millis(5)).build().unwrap_err();
+    let bad = ConfigBuilder::new().nonblocking(true).read_timeout(Duration::from_millis(5)).build();
+    let err = bad.validate().unwrap_err();
     assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
     assert_eq!(code_of(&err), Some(&MineCode::NonblockingWithTimeout));
     assert_eq!(err.to_string(), "[MINE0003] nonblocking is incompatible with read_timeout and write_timeout");
     assert_eq!(code_of(&io::Error::new(io::ErrorKind::Other, "not ours")), None);
-    let cfg = ConfigBuilder::new().umask_mode().write_timeout(Duration::from_secs(1)).build().unwrap();
+    // and a bind with it is refused the same way
+    let dir = scratch("badcfg");
+    let err = StreamBuilder::with_config(bad).bind_listener(dir.join("x.sock")).unwrap_err();
+    assert_eq!(code_of(&err), Some(&MineCode::NonblockingWithTimeout));
+
+    let cfg = ConfigBuilder::new().umask_mode().write_timeout(Duration::from_secs(1)).build();
     assert_eq!(cfg.socket_mode, None);
     assert_eq!(Config::default().socket_mode, Some(0o600));
 }
@@ -107,7 +113,7 @@ fn frames_cross_a_stream_socket_and_a_timeout_is_honoured() {
         let _ = done_rx.recv();
     });
 
-    let cfg = ConfigBuilder::new().read_timeout(Duration::from_millis(200)).build().unwrap();
+    let cfg = ConfigBuilder::new().read_timeout(Duration::from_millis(200)).build();
     let stream = StreamBuilder::with_config(cfg).connect(&path).unwrap();
     let (mut writer, mut reader) = framed(stream).unwrap();
     writer.write_frame(b"abc").unwrap();
