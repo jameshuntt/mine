@@ -1,12 +1,36 @@
 [package]
 name = "mine"
-version = "0.1.1"
-edition = "2024"
-
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.70"
 license = "MIT OR Apache-2.0"
-description = "High-assurance IPC and private Unix Domain Socket (UDS) orchestration. Provides exclusive data ownership and sandboxing for the Honest-Classified security ecosystem."
-
-authors = ["James Hunt <jameshuntdevelopment@gmail.com>"]
+description = "A Unix domain socket that is yours alone: owner-only paths that refuse to clobber anything but a socket, peer credentials checked before a byte is read, length-prefixed frames from abut, zeroizing buffers from classified."
+authors = ["James Hunt <james@1o.business>"]
 repository = "https://github.com/jameshuntt/mine"
+readme = "README.md"
+keywords = ["unix-socket", "ipc", "peer-credentials", "uds", "security"]
+categories = ["network-programming", "os::unix-apis"]
+include = ["src/**", "tests/**", "examples/**", "Cargo.toml", "README.md", "LICENSE-MIT", "LICENSE-APACHE"]
+
+[features]
+default = ["peercred"]
+# Who is on the other end: `Peer`, `peer_of`, `Admit`, and `BoundListener::accept_from`.
+peercred = ["dep:nix"]
+# Frames that land in and leave from `classified` containers.
+classified = ["dep:classified"]
 
 [dependencies]
+abut = { version = "0.2.0", path = "../abut", default-features = false }
+nix = { version = "0.30", features = ["socket", "user"], optional = true }
+classified = { version = "0.2.0", path = "../classified", optional = true }
+
+[[example]]
+name = "echo"
+
+[[example]]
+name = "owner_only"
+required-features = ["peercred"]
+
+[[example]]
+name = "handoff"
+required-features = ["classified"]
