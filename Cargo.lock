@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "abut"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "liaise",
  "serde",
@@ -36,7 +36,7 @@ checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
 
 [[package]]
 name = "classified"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "subtle",
  "zeroize",
@@ -108,7 +108,7 @@ dependencies = [
 
 [[package]]
 name = "mine"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "abut",
  "classified",
