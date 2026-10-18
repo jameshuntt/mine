@@ -10,7 +10,7 @@ use std::io::{Read, Write};
 
 use abut::{AbutError, FramedReader, FramedWriter};
 use classified::{ClassifiedBuffer, ClassifiedError};
-use liaise::{Liaise, LiaiseCodes};
+use liaise::LiaiseCodes;
 
 /// Why a classified receive failed. Renders as a `MINE` code; the frame or
 /// container error underneath is the [`source`](std::error::Error::source).

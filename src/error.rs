@@ -9,7 +9,7 @@
 
 use std::io;
 
-use liaise::{Liaise, LiaiseCodes};
+use liaise::LiaiseCodes;
 
 /// Why this crate refused, as a code the `liaise` crate renders.
 #[derive(LiaiseCodes, Debug, Clone, PartialEq, Eq)]
