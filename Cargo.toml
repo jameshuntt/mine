@@ -2,7 +2,7 @@
 name = "mine"
 version = "0.3.2"
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.85"
 license = "MIT OR Apache-2.0"
 description = "A Unix domain socket that is yours alone: owner-only paths that refuse to clobber anything but a socket, peer credentials checked before a byte is read, length-prefixed frames from abut, zeroizing buffers from classified."
 authors = ["James Hunt <james@1o.business>"]

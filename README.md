@@ -74,6 +74,11 @@ hands the typed code back.
 
 Message schemas, request routing, async runtimes, TCP. Unix only.
 
+## Releasing
+
+Bump `version` in Cargo.toml, add a dated `## <version> (YYYY-MM-DD)` entry to CHANGELOG.md, and push to
+`main`. CI (.github/workflows/ci.yml) runs the tests and clippy, then publishes that version to crates.io.
+
 ## License
 
 MIT OR Apache-2.0.
